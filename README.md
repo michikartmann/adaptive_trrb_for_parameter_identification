@@ -1,4 +1,4 @@
-# Adaptive Trust Region Reduced Basis Methods for Inverse Parameter Identification Problems
+# Adaptive Reduced Basis Trust Region Methods for Inverse Parameter Identification Problems
 
 [![DOI](https://zenodo.org/badge/690415728.svg)](https://zenodo.org/badge/latestdoi/690415728)
 
@@ -6,8 +6,9 @@
 # ~~~
 # This file is part of the paper:
 #   
-#           "Adaptive Trust Region Reduced Basis for Inverse Parameter Identification Problems"
+#           "Adaptive Reduced Basis Trust Region Methods for Inverse Parameter Identification Problems"
 #
+# Preprint: https://arxiv.org/abs/2309.07627
 #
 # Copyright 2023 all developers. All rights reserved.
 # License: Licensed as BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
@@ -16,7 +17,7 @@
 # ~~~
 ```
 
-In this repository, we provide the code for the numerical experiments of the paper "Adaptive Trust Region Reduced Basis Methods for Inverse Parameter Identification Problems". The implementation is based on Python and includes both the reduction of the infinite-dimensional parameter space and the reduction of the state space in an error-aware trust region framework.
+In this repository, we provide the code for the numerical experiments of the paper "Adaptive Reduced Basis Trust Region Methods for Inverse Parameter Identification Problems" by Michael Kartmann, Tim Keil, Mario Ohlberger, Stefan Volkwein, Barbara Kaltenbacher. A preprint is available [here](https://arxiv.org/abs/2309.07627). The implementation is based on Python and includes both the reduction of the infinite-dimensional parameter space and the reduction of the state space in an error-aware trust region framework.
 
 ## Organization of the repository
 
