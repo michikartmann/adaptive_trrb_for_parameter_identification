@@ -21,7 +21,7 @@ In this repository, we provide the code for the numerical experiments of the pap
 
 ## Organization of the repository
 
-The repository contains the directories [`Code/`](https://github.com/michikartmann/adaptive_tr_rb_methods_for_inverse_problems/tree/main/Code) and [`Setup/`](https://github.com/michikartmann/adaptive_tr_rb_methods_for_inverse_problems/tree/main/Setup). If you want to run the code on your machine, you can use `requirements.txt`  or `environment.yml`  in the directory [`Setup/`](https://github.com/michikartmann/adaptive_tr_rb_methods_for_inverse_problems/tree/main/Setup) to set up your Python environment (via pip or conda), in which you can run the code. The directory [`Code/`](https://github.com/michikartmann/adaptive_tr_rb_methods_for_inverse_problems/tree/main/Code) contains the source code written in the framework of the package [pyMor](https://github.com/pymor/pymor). The code consists of the main files
+The repository contains the directories [`Code/`](https://github.com/michikartmann/adaptive_trrb_for_parameter_identification/tree/main/Code) and [`Setup/`](https://github.com/michikartmann/adaptive_trrb_for_parameter_identification/tree/main/Setup). If you want to run the code on your machine, you can use `requirements.txt`  or `environment.yml`  in the directory [`Setup/`](https://github.com/michikartmann/adaptive_trrb_for_parameter_identification/tree/main/Setup) to set up your Python environment (via pip or conda), in which you can run the code. The directory [`Code/`](https://github.com/michikartmann/adaptive_trrb_for_parameter_identification/tree/main/Code) contains the source code written in the framework of the package [pyMor](https://github.com/pymor/pymor). The code consists of the main files
 
 * `Main_Reaction.py`: the main file for the reconstruction of the reaction coefficient in Section 4.2,
 * `Main_Diffusion.py`: the main file for the reconstruction of the diffusion coefficient in Section 4.3,
@@ -38,7 +38,7 @@ and the files containing the code for the variants of the iteratively regularize
 * `IRGNM.py:` contains the implementation of the FOM IRGNM (see Section 2.2) and the parameter space reduced Qr IRGNM (see Section 3.1),
 * `Qr_Vr_TR_IRGNM.py:` contains the implementation of the parameter and state space reduced Qr-Vr TR IRGNM (see Section 3.3).
 
-Further, there is the file  `helpers.py` for everything else and the empty directories [`Code/Diffusion_Plots/`](https://github.com/michikartmann/adaptive_tr_rb_methods_for_inverse_problems/tree/main/Code/Diffusion_Plots) and [`Code/Reaction_Plots/`](https://github.com/michikartmann/adaptive_tr_rb_methods_for_inverse_problems/tree/main/Code/Reaction_Plots), where the data is saved after calling the corresponding main files.
+Further, there is the file  `helpers.py` for everything else and the empty directories [`Code/Diffusion_Plots/`](https://github.com/michikartmann/adaptive_trrb_for_parameter_identification/tree/main/Code/Diffusion_Plots) and [`Code/Reaction_Plots/`](https://github.com/michikartmann/adaptive_trrb_for_parameter_identification/tree/main/Code/Reaction_Plots), where the data is saved after calling the corresponding main files.
 
 ## Questions
 
