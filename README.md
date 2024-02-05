@@ -19,9 +19,13 @@
 
 In this repository, we provide the code for the numerical experiments of the paper "Adaptive Reduced Basis Trust Region Methods for Inverse Parameter Identification Problems" by Michael Kartmann, Tim Keil, Mario Ohlberger, Stefan Volkwein, Barbara Kaltenbacher. A preprint is available [here](https://arxiv.org/abs/2309.07627). The implementation is based on Python and includes both the reduction of the infinite-dimensional parameter space and the reduction of the state space in an error-aware trust region framework.
 
+## Setup 
+
+Tu run the code you need to install the python package [pyMor](https://github.com/pymor/pymor) Version 2023.01.01 with all optional dependencies in your environment.
+
 ## Organization of the repository
 
-The repository contains the directories [`Code/`](https://github.com/michikartmann/adaptive_trrb_for_parameter_identification/tree/main/Code) and [`Setup/`](https://github.com/michikartmann/adaptive_trrb_for_parameter_identification/tree/main/Setup). If you want to run the code on your machine, you can use `requirements.txt`  or `environment.yml`  in the directory [`Setup/`](https://github.com/michikartmann/adaptive_trrb_for_parameter_identification/tree/main/Setup) to set up your Python environment (via pip or conda), in which you can run the code. The directory [`Code/`](https://github.com/michikartmann/adaptive_trrb_for_parameter_identification/tree/main/Code) contains the source code written in the framework of the package [pyMor](https://github.com/pymor/pymor). The code consists of the main files
+The repository contains the directory [`Code/`](https://github.com/michikartmann/adaptive_trrb_for_parameter_identification/tree/main/Code), which contains the source code written in the framework of the package [pyMor](https://github.com/pymor/pymor). The code consists of the main files
 
 * `Main_Reaction.py`: the main file for the reconstruction of the reaction coefficient in Section 4.2,
 * `Main_Diffusion.py`: the main file for the reconstruction of the diffusion coefficient in Section 4.3,
