@@ -21,14 +21,14 @@ In this repository, we provide the code for the numerical experiments of the pap
 
 ## Setup 
 
-Tu run the code you need to install the python package [pyMor](https://github.com/pymor/pymor) Version 2023.01.01 in your environment. This can be done e.g. with conda via
+Tu run the code you need to install the python package [pyMOR](https://github.com/pymor/pymor) Version 2023.01.01 in your environment. This can be done e.g. with conda via
 ```
 conda install -c conda-forge pymor=2023.1.0
 ```
 
 ## Organization of the repository
 
-The repository contains the directory [`Code/`](https://github.com/michikartmann/adaptive_trrb_for_parameter_identification/tree/main/Code), which contains the source code written in the framework of the package [pyMor](https://github.com/pymor/pymor). The code consists of the main files
+The repository contains the directory [`Code/`](https://github.com/michikartmann/adaptive_trrb_for_parameter_identification/tree/main/Code), which contains the source code written in the framework of the package [pyMOR](https://github.com/pymor/pymor). The code consists of the main files
 
 * `Main_Reaction.py`: the main file for the reconstruction of the reaction coefficient in Section 4.2,
 * `Main_Diffusion.py`: the main file for the reconstruction of the diffusion coefficient in Section 4.3,
