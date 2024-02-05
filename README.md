@@ -21,7 +21,10 @@ In this repository, we provide the code for the numerical experiments of the pap
 
 ## Setup 
 
-Tu run the code you need to install the python package [pyMor](https://github.com/pymor/pymor) Version 2023.01.01 with all optional dependencies in your environment.
+Tu run the code you need to install the python package [pyMor](https://github.com/pymor/pymor) Version 2023.01.01 in your environment. This can be done e.g. with conda via
+```
+conda install -c conda-forge pymor=2023.1.0
+```
 
 ## Organization of the repository
 
