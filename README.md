@@ -41,8 +41,9 @@ python Main_Reaction.py
 
 The repository contains the directory [`Code/`](https://github.com/michikartmann/adaptive_trrb_for_parameter_identification/tree/main/Code), which contains the source code written in the framework of the package [pyMOR](https://pymor.org). The code consists of the main files
 
-* `Main_Reaction.py`: the main file for the reconstruction of the reaction coefficient in Section 4.2,
-* `Main_Diffusion.py`: the main file for the reconstruction of the diffusion coefficient in Section 4.3,
+* `Main_Reaction.py`: the main file for the reconstruction of the reaction coefficient in Sections 4.2 and 4.4,
+* `Main_Diffusion.py`: the main file for the reconstruction of the diffusion coefficient in Sections 4.3 and 4.5,
+* `Main_ErrorEstimatorCaseStudy.py`: the main file for comparing different strategies for evaluating the error estimator in Section 4.6.
 
 The modeling and discretizations of the problems as well as the model reduction code are written in a [pyMORish way](https://docs.pymor.org/2023-1-0/technical_overview.html) with the following main components
 
@@ -51,7 +52,7 @@ The modeling and discretizations of the problems as well as the model reduction 
 * `model.py`: contains the implementation of the full-order or reduced-order model (ROM),
 * `reductor.py`: reduces the full-order model to obtain a reduced-order model,
 
-Moreover, the following files containing the code for the variants of the iteratively regularized gauß newton methods (IRGNM)
+Moreover, the following files contain the code for the variants of the iteratively regularized gauß newton methods (IRGNM)
 
 * `IRGNM.py:` contains the implementation of the FOM IRGNM (see Section 2.2) and the parameter space reduced Qr IRGNM (see Section 3.1),
 * `Qr_Vr_TR_IRGNM.py:` contains the implementation of the parameter and state space reduced Qr-Vr TR IRGNM (see Section 3.3).
