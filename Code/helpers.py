@@ -5,7 +5,7 @@
 #
 #   https://github.com/michikartmann
 #
-# Copyright 2023 all developers. All rights reserved.
+# Copyright 2024 all developers. All rights reserved.
 # License: Licensed as BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 # Contributors team: Michael Kartmann, Tim Keil
 # ~~~

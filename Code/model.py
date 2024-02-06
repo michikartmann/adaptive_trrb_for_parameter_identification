@@ -5,7 +5,7 @@
 #
 #   https://github.com/michikartmann
 #
-# Copyright 2023 all developers. All rights reserved.
+# Copyright 2024 all developers. All rights reserved.
 # License: Licensed as BSD 2-Clause License (http://opensource.org/licenses/BSD-2-Clause)
 # Contributors team: Michael Kartmann, Tim Keil
 # ~~~
@@ -82,9 +82,9 @@ class StationaryModelIP(StationaryModel):
             self.prepare_direct_A_q_assembly()
         elif not self.assembled_model and self.B_assemble:
             self.prepare_direct_A_q_assembly()
-            self.true_parameterized_operator, self.constant_operator = self.extract_true_parameterized_operator() # tru parametrized wird nur verwendet wenn diffusion
+            self.true_parameterized_operator, self.constant_operator = self.extract_true_parameterized_operator() 
         else: 
-            self.true_parameterized_operator, self.constant_operator = self.extract_true_parameterized_operator() # tru parametrized wird nur verwendet wenn diffusion
+            self.true_parameterized_operator, self.constant_operator = self.extract_true_parameterized_operator()
 
         # create Q space
         self.Q_vector_space = NumpyVectorSpace(self.opt_data['par_dim'], 'STATE')
