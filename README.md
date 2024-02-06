@@ -1,6 +1,6 @@
 # Adaptive Reduced Basis Trust Region Methods for Inverse Parameter Identification Problems
 
-[![DOI](https://zenodo.org/badge/690415728.svg)](https://zenodo.org/badge/latestdoi/690415728)
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10625863.svg)](https://doi.org/10.5281/zenodo.10625863)
 
 ```
 # ~~~
