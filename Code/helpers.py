@@ -15,6 +15,242 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.sparse.linalg import gmres, LinearOperator, cg
 
+#%%
+def postprocess(tol, tau, noise_level, problem_type, norm_type, N, save_plots, save_path, plot_parameters, fom_IP, q_exact, opt_methods, q_FOM = None, q_Qr = None, q_Qr_Vr = None, history_QTRRB = None, history_QFOM = None, history_FOM = None):
+    print('#######################################################################')
+    print('################## ALL RESULTS ########################################')
+    print(f'problemtype = {problem_type}, N = {N}, regularization_type = {norm_type}')
+    print(f'tau = {tau}, noise_level = {noise_level}.')
+    print('#######################################################################')
+    print('#######################################################################')
+
+    get_data_for_tables = False
+    save_eps = False
+
+    # error est usage plot
+    if q_Qr_Vr is not None and 1:
+         plt.figure()
+         plt.plot(history_QTRRB['fom_solves_for_unassembled_residual_error_est'], '.-', label = 'Online computation of the error estimator')
+         plt.plot(history_QTRRB['fom_solves_for_assembling_residual_error_est'],'.-', label = 'Assembly of the error estimator')
+         plt.plot(history_QTRRB['true_fom_solves_for_error_est'],'.-', label = 'Mixed strategy')
+         plt.legend()
+         plt.xlabel("k")
+         plt.ylabel("FOM solves")
+         max_len = len(history_QTRRB['fom_solves_for_unassembled_residual_error_est'])
+         plt.xticks(ticks = range(0,max_len,5), labels = range(0,max_len, 5))
+         if save_plots:
+             if save_path is not None:
+                 title = save_path + problem_type+f'_N={N}_errorest'
+             else:
+                 title = problem_type+f'_N={N}_errorest.png'
+             plt.savefig(title+'.png', bbox_inches='tight')
+             plt.savefig(title+'.eps',  bbox_inches='tight', pad_inches=0)
+         plt.show()
+         
+    # get min max
+    qmin, qmax = fom_IP.get_min_max(q_exact, q_FOM, q_Qr, q_Qr_Vr)
+    colormap_bounds = [qmin, qmax]
+    
+    # plot exact parameter
+    if plot_parameters:
+       fom_IP.plot_matplotlib(q_exact, 'Exact parameter', save_plots, problem_type+f'_N={N}_exact', save_path, save_eps = save_eps, colormap_bounds = colormap_bounds)
+       # fom_IP.plot_matplotlib(fom_IP.opt_data['u_noise'].to_numpy()[0], 'Noisy data', save_plots, problem_type+f'_N={N}_noisydata', save_path, save_eps = save_eps)
+       # fom_IP.plot_matplotlib(fom_IP.opt_data['noise'], 'Noise', save_plots, problem_type+f'_N={N}_noise', save_path, save_eps = save_eps)
+
+    # plot reconstructed parameters and print results
+    if q_Qr is not None:
+        print(f'Qr IRGNM|| time: {history_QFOM["time"]}, FOM solves: {history_QFOM["number_fom_solves"]}, FOM B applications: {history_QFOM["number_fom_B_operator_applications"]}, iterations: {history_QFOM["k"]}, Basis Q: {history_QFOM["len_Q_basis"]}')
+        rel_err_QFOM = fom_IP.Q_norm(q_exact-q_Qr)/fom_IP.Q_norm(q_exact)
+        print(f'discrepancy residual = {history_QFOM["output_res"][-1]}, norm_grad = {history_QFOM["non_regularized_gradient_norm"][-1]}, rel. error to exact = {rel_err_QFOM}')
+        print('-------------------------------------------------------------------')
+        if plot_parameters:
+            plt.figure()
+            history_QFOM['u'] = fom_IP.state(q_Qr).to_numpy()[0]
+            fom_IP.plot_matplotlib(q_Qr, r'$q^{Q_r}$', save_plots, problem_type+f'_N={N}_QFOM', save_path,  save_eps = save_eps, colormap_bounds = colormap_bounds)
+            # fom_IP.plot_matplotlib(history_QFOM['u'], r'$u^{Q_r}$', save_plots, problem_type+f'_N={N}_stateQFOM', save_path,  save_eps = save_eps)  
+            
+        if save_plots:
+            if save_path is not None:
+                title = save_path + problem_type+f'QFOMarray_N={N}.npy'
+            else:
+                title = problem_type+f'QFOMarray_N={N}.npy'
+            np.save(title, history_QFOM)
+
+    if q_FOM is not None:
+        print(f'FOM IRGNM|| time: {history_FOM["time"]}, FOM solves: {history_FOM["number_fom_solves"]}, FOM B applications: {history_FOM["number_fom_B_operator_applications"]}, iterations: {history_FOM["k"]}')
+        rel_err_FOM = fom_IP.Q_norm(q_exact-q_FOM)/fom_IP.Q_norm(q_exact)
+        print(f'discrepancy residual = {history_FOM["output_res"][-1]}, norm_grad = {history_FOM["non_regularized_gradient_norm"][-1]}, rel. error to exact = {rel_err_FOM}')
+        print('-------------------------------------------------------------------')
+        if plot_parameters:
+            plt.figure()
+            fom_IP.plot_matplotlib(q_FOM, r'$q^{FOM}$', save_plots, problem_type+f'_N={N}_FOM', save_path,  save_eps = save_eps, colormap_bounds = colormap_bounds)
+            history_FOM['u'] = fom_IP.state(q_FOM).to_numpy()[0]
+            # fom_IP.plot_matplotlib(history_FOM['u'], r'$u^{FOM}$', save_plots, problem_type+f'_N={N}_stateFOM', save_path,  save_eps = save_eps)
+                
+        if save_plots:
+            if save_path is not None:
+                title = save_path + problem_type+f'FOMarray_N={N}.npy'
+            else:
+                title = problem_type+f'FOMarray_N={N}.npy'
+            np.save(title, history_FOM)
+
+    if q_Qr_Vr is not None:
+        print(f'Qr-Vr TR IRGNM|| time: {history_QTRRB["time"]}, FOM solves: {history_QTRRB["number_fom_solves"]}, fom solves for error est: {sum(history_QTRRB["true_fom_solves_for_error_est"])}, FOM B applications: {history_QTRRB["number_fom_B_operator_applications"]}, iterations: {history_QTRRB["k"]}, Basis Q = {history_QTRRB["len_Q_basis"]}, Basis V = {history_QTRRB["len_V_basis"]}')
+        rel_err_QTRRB = fom_IP.Q_norm(q_exact-q_Qr_Vr)/fom_IP.Q_norm(q_exact)
+        print(f'discrepancy residual = {history_QTRRB["output_res"][-1]}, norm_grad = {history_QTRRB["non_regularized_gradient_norm"][-1]}, rel. error to exact = {rel_err_QTRRB}')
+        print('-------------------------------------------------------------------')
+        if plot_parameters:
+            plt.figure()
+            fom_IP.plot_matplotlib(q_Qr_Vr, r'$q^{Q_r-V_r}$', save_plots, problem_type+f'_N={N}_QTRRB', save_path,  save_eps = save_eps, colormap_bounds = colormap_bounds)
+            history_QTRRB['u'] = fom_IP.state(q_Qr_Vr).to_numpy()[0]
+            # fom_IP.plot_matplotlib(history_QTRRB['u'], r'$u^{Q_r-V_r}$', save_plots, problem_type+f'_N={N}_stateQTRRB', save_path,  save_eps = save_eps)
+            
+        if save_plots:
+            if save_path is not None:
+                title = save_path + problem_type+f'TRRBarray_N={N}.npy'
+            else:
+                title = problem_type+f'TRRBarray_N={N}.npy'
+            np.save(title, history_QTRRB)
+                
+
+    # combined plots and plot differences    
+    if "FOM IRGNM" in opt_methods and 'Qr IRGNM' in opt_methods and 'Qr-Vr TR IRGNM' in opt_methods: 
+        
+        # subplots
+        fom_IP.plot_subplot_para(q_exact, q_FOM, q_Qr, q_Qr_Vr, title = None, save = save_plots, save_title = problem_type+f'_N={N}_subplots_q.png', path = save_path)
+        
+        # L2 error
+        print(f'rel. error norm((q_FOM - q_Qr)/q_FOM)= { fom_IP.Q_norm(q_FOM-q_Qr)/fom_IP.Q_norm(q_FOM)}')
+        print(f'rel. error norm((q_Qr - q_Qr_Vr)/q_Qr) = { fom_IP.Q_norm(q_Qr-q_Qr_Vr)/fom_IP.Q_norm(q_Qr)}')
+        print(f'rel. error norm((q_FOM - q_Qr_Vr)/q_FOM) = { fom_IP.Q_norm(q_FOM-q_Qr_Vr)/fom_IP.Q_norm(q_FOM)}')
+        
+        q_FOM_pymor = fom_IP.Q_vector_space.from_numpy(q_FOM)
+        q_Qr_pymor = fom_IP.Q_vector_space.from_numpy(q_Qr)
+        q_Qr_Vr_pymor = fom_IP.Q_vector_space.from_numpy(q_Qr_Vr)
+        q_exact_pymor = fom_IP.Q_vector_space.from_numpy(q_exact)
+        q_FOM_norm = fom_IP.primal_model.l2_norm(q_FOM_pymor)
+        q_exact_norm = fom_IP.primal_model.l2_norm(q_exact_pymor)
+        print(f'rel. error L2 norm((q_FOM - q_Qr)/q_FOM)= {(fom_IP.primal_model.l2_norm(q_FOM_pymor-q_Qr_pymor)/q_FOM_norm)[0]}')
+        print(f'rel. error L2 norm((q_Qr - q_Qr_Vr)/q_Qr) = { (fom_IP.primal_model.l2_norm(q_Qr_pymor-q_Qr_Vr_pymor)/fom_IP.primal_model.l2_norm(q_Qr_pymor))[0]}')
+        print(f'rel. error L2 norm((q_FOM - q_Qr_Vr)/q_FOM) = { (fom_IP.primal_model.l2_norm(q_FOM_pymor-q_Qr_Vr_pymor)/q_FOM_norm)[0]}')
+            
+        if get_data_for_tables:
+            print(f'rel. error L2 norm((q_exact - q_Qr)/q_exact)= {(fom_IP.primal_model.l2_norm(q_exact_pymor-q_Qr_pymor)/q_exact_norm)[0]}')
+            print(f'rel. error L2 norm((q_exact - q_Qr_Vr)/q_exact) = { (fom_IP.primal_model.l2_norm(q_exact_pymor-q_Qr_Vr_pymor)/(q_exact_norm))[0]}')
+            print(f'rel. error L2 norm((q_exact - q_FOM)/q_exact) = { (fom_IP.primal_model.l2_norm(q_exact_pymor-q_FOM_pymor)/q_exact_norm)[0]}')
+            
+            # maximum minimum pointwise error
+            print(f'max rel. error (q_FOM - q_Qr)/q_FOM)= { max(abs((q_FOM-q_Qr))/abs(q_FOM))}')
+            print(f'max rel. error (q_Qr - q_Qr_Vr)/q_Qr) = {max(abs((q_Qr-q_Qr_Vr))/abs(q_Qr))}')
+            print(f'max rel. error (q_FOM - q_Qr_Vr)/q_FOM) = { max(abs((q_FOM-q_Qr_Vr))/abs(q_FOM))}')
+            print(f'min rel. error (q_FOM - q_Qr)/q_FOM)= { min(abs((q_FOM-q_Qr))/abs(q_FOM))}')
+            print(f'min rel. error (q_Qr - q_Qr_Vr)/q_Qr) = {min(abs((q_Qr-q_Qr_Vr))/abs(q_Qr))}')
+            print(f'min rel. error (q_FOM - q_Qr_Vr)/q_FOM) = { min(abs((q_FOM-q_Qr_Vr))/abs(q_FOM))}')
+        
+        # relative differences pointwise
+        abs_min, abs_max = fom_IP.get_min_max(abs((q_FOM-q_Qr)), abs((q_Qr-q_Qr_Vr)),abs((q_FOM-q_Qr_Vr)))
+        rel_min, rel_max = fom_IP.get_min_max(abs((q_FOM-q_Qr))/abs(q_FOM), abs((q_Qr-q_Qr_Vr))/abs(q_Qr), abs((q_FOM-q_Qr_Vr))/abs(q_FOM))
+        rel_min_ex, rel_max_ex = fom_IP.get_min_max(abs((q_exact-q_Qr))/abs(q_exact), abs((q_exact-q_FOM))/abs(q_exact), abs((q_exact-q_Qr_Vr))/abs(q_exact))
+        if get_data_for_tables:
+            print(f'colorbar abs error to FOM: {abs_min} {abs_max}')
+            print(f'colorbar rel error to FOM: {rel_min} {rel_max}')
+            print(f'colorbar rel error to exact: {rel_min_ex} {rel_max_ex}')
+    
+        plt.figure()
+        fom_IP.plot_matplotlib(abs((q_FOM-q_Qr))/abs(q_FOM), r'rel error FOM - ${Q_r}$', save_plots, problem_type+f'_N={N}_rel_diff2_fom-qfom' , save_path,  save_eps = save_eps, colormap_bounds = [rel_min, rel_max ])
+        plt.figure()
+        fom_IP.plot_matplotlib(abs((q_Qr-q_Qr_Vr))/abs(q_Qr), r'rel error ${Q_r}$-${Q_r-V_r}$', save_plots, problem_type+f'_N={N}_rel_diff2_qfom-qtrrb', save_path,  save_eps = save_eps, colormap_bounds = [rel_min, rel_max ] )
+        plt.figure()
+        fom_IP.plot_matplotlib(abs((q_FOM-q_Qr_Vr))/abs(q_FOM), r'rel error FOM - ${Q_r-V_r}$', save_plots, problem_type+f'_N={N}_rel_diff2_fom-qtrrb', save_path,  save_eps = save_eps, colormap_bounds = [rel_min, rel_max ] )
+        
+        # # abs differences pointwise
+        # plt.figure()
+        # fom_IP.plot_matplotlib(abs((q_FOM-q_Qr)), r'abs $d^{Q_r}$', save_plots, problem_type+f'_N={N}_abs_diff2_fom-qfom' , save_path,  save_eps = save_eps, colormap_bounds = [abs_min, abs_max ] )
+        # plt.figure()
+        # fom_IP.plot_matplotlib(abs((q_Qr-q_Qr_Vr)), r'abs $d^{Q_r,Q_r-V_r}$', save_plots, problem_type+f'_N={N}_abs_diff2_qfom-qtrrb', save_path,  save_eps = save_eps, colormap_bounds = [abs_min, abs_max ]  )
+        # plt.figure()
+        # fom_IP.plot_matplotlib(abs((q_FOM-q_Qr_Vr)), r'abs $d^{Q_r-V_r}$', save_plots, problem_type+f'_N={N}_abs_diff2_fom-qtrrb', save_path,  save_eps = save_eps, colormap_bounds = [abs_min, abs_max ]  )
+        
+        # rel error to exact
+        plt.figure()
+        fom_IP.plot_matplotlib(abs((q_exact-q_Qr))/abs(q_exact), r'rel error exact - ${Q_r}$', save_plots, problem_type+f'_N={N}_rel_diff2_exact-qfom' , save_path,  save_eps = save_eps, colormap_bounds = [rel_min_ex, rel_max_ex ])
+        plt.figure()
+        fom_IP.plot_matplotlib(abs((q_exact-q_Qr_Vr))/abs(q_exact), r'rel error exact - ${Q_r-V_r}$', save_plots, problem_type+f'_N={N}_rel_diff2_exact-qtrrb', save_path,  save_eps = save_eps, colormap_bounds = [rel_min_ex, rel_max_ex ])
+        plt.figure()
+        fom_IP.plot_matplotlib(abs((q_exact-q_FOM))/abs(q_exact), r'rel error exact - FOM', save_plots, problem_type+f'_N={N}_rel_diff2_exact-fom', save_path,  save_eps = save_eps, colormap_bounds = [rel_min_ex, rel_max_ex ] )
+        
+        
+    # plot output residual against iterations
+    plt.figure()
+    if 'Qr IRGNM' in opt_methods:
+        plt.semilogy(history_QFOM["output_res"], '-o', label= r'$Q_r$ IRGNM')
+    if 'Qr-Vr TR IRGNM' in opt_methods:
+        plt.semilogy(history_QTRRB["output_res"], '-o', label= r'$Q_r$-$V_r$ IRGNM')
+    if "FOM IRGNM" in opt_methods:
+        plt.semilogy(history_FOM["output_res"], '-o', label= 'FOM IRGNM')
+    value = tol+noise_level*tau
+    plt.axhline(y=value, color='g', linestyle='-', label = r'$\tau\delta$')
+    plt.xlabel('$k$')
+    plt.ylabel(r'$\|\|F(q^k)-y^{\delta}\|\|_{H}$')
+    plt.legend(loc = 1)
+    if save_plots:
+        if save_path is not None:
+            title = save_path + problem_type+f'_N={N}_residual_iteration.png'
+        else:
+            title = problem_type+f'_N={N}_residual_iteration.png'
+        plt.savefig(title, bbox_inches='tight')
+
+    # plot output residual against cpu time
+    plt.figure()
+    if 'Qr IRGNM' in opt_methods:
+        plt.semilogy(history_QFOM["time_steps"], history_QFOM["output_res"], '-o', label= r'$Q_r$ IRGNM')
+    if 'Qr-Vr TR IRGNM' in opt_methods:
+        plt.semilogy(history_QTRRB["time_steps"], history_QTRRB["output_res"], '-o', label= r'$Q_r$-$V_r$ IRGNM')
+    if "FOM IRGNM" in opt_methods:
+        plt.semilogy(history_FOM["time_steps"], history_FOM["output_res"], '-o', label= 'FOM IRGNM')
+    value = tol+noise_level*tau
+    plt.axhline(y=value, color='g', linestyle='-', label = r'$\tau\delta$')
+    plt.xlabel('time [s]')
+    plt.ylabel(r'$\|\|F(q^k)-y^{\delta}\|\|_{H}$')
+    plt.legend(loc = 1)
+    if save_plots:
+        if save_path is not None:
+            title = save_path + problem_type+f'_N={N}_residual_cpu.png'
+        else:
+            title = problem_type+f'_N={N}_residual_cpu.png'
+        plt.savefig(title, bbox_inches='tight')
+
+    if get_data_for_tables:
+        print(f'colorbar reconstructions: {fom_IP.get_min_max(q_exact, q_FOM, q_Qr, q_Qr_Vr)}')
+        
+        for i in range(len(history_QFOM['time_steps'])):
+            print(f'{history_QFOM["time_steps"][i]}  {history_QFOM["output_res"][i]}')
+        print('------------')
+        for i in range(len(history_QTRRB['time_steps'])):
+            print(f'{history_QTRRB["time_steps"][i]}  {history_QTRRB["output_res"][i]}')
+        print('------------')
+        for i in range(len(history_FOM['time_steps'])):
+            print(f'{history_FOM["time_steps"][i]}  {history_FOM["output_res"][i]}')
+        print('------------')
+            
+    # # plot gradient norm against iterations
+    # plt.figure()
+    # if 'Qr IRGNM' in opt_methods:
+    #     plt.semilogy(history_QFOM["non_regularized_gradient_norm"], '-o', label= r'$Q_r$ IRGNM')
+    # if 'Qr-Vr TR IRGNM' in opt_methods:
+    #     plt.semilogy(history_QTRRB["non_regularized_gradient_norm"],'-o', label= r'$Q_r$-$V_r$ IRGNM')
+    # if "FOM IRGNM" in opt_methods:
+    #     plt.semilogy(history_FOM["regularized_gradi ent_norm"], '-o', label= 'FOM IRGNM nonregularized')
+    # plt.xlabel('$k$')
+    # plt.legend(loc = 1)
+    # plt.title("Gradient norm")
+    # if save_plots:
+    #     if save_path is not None:
+    #         title = save_path + problem_type+f'_N={N}_gradient.png'
+    #     else:
+    #         title = problem_type+f'_N={N}_gradient.png'
+    #     plt.savefig(title, bbox_inches='tight')
+
 #%% projected newton and newton method
 
 def LINSOLVER_with_callback(A, b, tol, solvertype):

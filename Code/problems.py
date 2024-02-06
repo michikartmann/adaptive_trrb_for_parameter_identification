@@ -21,10 +21,10 @@ def whole_problem(N = 100, contrast_parameter = 2, parameter_location = 'diffusi
     # check input and set problem type
     assert parameter_location in {'diffusion', 'reaction' }, 'Change parameter location to "diffusion" or "dirichlet"'
     assert boundary_conditions in {'dirichlet', 'robin' }, 'Change boundary conditions to "dirichlet" or "robin"'
-    assert exact_parameter in {'PacMan', 'Kirchner', 'other' }, 'Change exact parameter to "Landweber" or "other"'
+    assert exact_parameter in {'PacMan', 'Kirchner', 'other', 'sinus'}, 'Change exact parameter to "Landweber" or "other"'
     assert parameter_elements in {'P1' }, ' "P1" '
     
-    problem_type = parameter_location + ' ' + boundary_conditions + ' ' + exact_parameter + ' ' + parameter_elements
+    problem_type = parameter_location + '_' + boundary_conditions + '_' + exact_parameter + '_' + parameter_elements
     p = thermal_block_problem_h1((N, N))    
     f = ConstantFunction(1, 2)                                                  # PDE rhs f
     
@@ -93,17 +93,22 @@ def whole_problem(N = 100, contrast_parameter = 2, parameter_location = 'diffusi
          
     elif exact_parameter == 'other':
         
+        # background = ConstantFunction(3, 2)
+        # upper_right = ExpressionFunction('sin(2*pi*x[0])*cos(pi*x[1])', 2)  
+        # exact_q_function = upper_right + background
+                                       
         multiscale_part = ConstantFunction(0,2)
-        twodhat = twodhatfunction([[0.6,0.75,0.9], [0.1,0.25,0.4]])             
+        twodhat = twodhatfunction([[0.6,0.75,0.9], [0.1,0.25,0.4]])                 
         continuous_part = GenericFunction(twodhat, 2)
         upper_right = ExpressionFunction('(0.2 < x[0]) * (x[0] < 0.3) \
-                                       * (0.7< x[1]) * (x[1] < 0.8)', 2)  
+                                        * (0.7< x[1]) * (x[1] < 0.8)', 2)  
         discontinuous_part = ExpressionFunction('sqrt((x[0]-0.25)**2 \
-                                     + (x[1]-0.25)**2) <= 0.1', 2)
+                                      + (x[1]-0.25)**2) <= 0.1', 2)
         smooth_part =  ExpressionFunction('exp(-20*(x[0]-0.75)**2 - 20*(x[1]-0.75)**2)', 2 )
         background = ConstantFunction(3, 2)
         sinus_background = ConstantFunction(0,2)
-        exact_q_function = background + smooth_part + discontinuous_part + continuous_part + upper_right + multiscale_part + sinus_background #+ middle_part
+        exact_q_function = background + 5*smooth_part + 5*discontinuous_part + 5*continuous_part + 5*upper_right + multiscale_part + sinus_background #+ middle_part
+    
         
     # create exact model with exact parameter and energy_product model
     if parameter_location == 'diffusion':

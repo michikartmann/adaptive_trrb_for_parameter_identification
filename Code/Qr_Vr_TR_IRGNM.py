@@ -117,7 +117,7 @@ class IRGNM_TRSurrogate(BasicObject):
 
 #%% Qr-Vr TR IRGNM
 
-def Qr_Vr_TR_IRGNM(parameter_space, fom_IP, TR_IRGNM_setup, q0, tol = 1e-6, initial_Qsnapshots = [] ):
+def Qr_Vr_TR_IRGNM(parameter_space, fom_IP, TR_IRGNM_setup, q0, tol = 1e-6, initial_Qsnapshots = [], skip_error_est_assembly_condition = True ):
 
     #===== read setup and input checks ========================================
     # read IRGNM setup
@@ -226,10 +226,10 @@ def Qr_Vr_TR_IRGNM(parameter_space, fom_IP, TR_IRGNM_setup, q0, tol = 1e-6, init
         history["fom_solves_for_building_hierarchical_error_est"] = 2
     history['fom_solves_for_assembling_residual_error_est'] = [2 + (len(basis_Q) +1)*float(surrogate.rb_size())]
     history['fom_solves_for_unassembled_residual_error_est'] = []  
-    history['true_fom_solves_for_residual_error_est'] = [2 + (len(basis_Q) +1)*float(surrogate.rb_size())]  
     history["accepted_rejected_string"] = []
     history["non_regularized_gradient_norm"] = [gradient_norm]
     switched_at_iteration = []
+    online_error_est_fom_solves = 0
     
 #============= Outer iteration ================================================
     iteration = 0                                                              
@@ -237,8 +237,8 @@ def Qr_Vr_TR_IRGNM(parameter_space, fom_IP, TR_IRGNM_setup, q0, tol = 1e-6, init
     rejected = False
     while True:
             
-            # test if error est needs to be assembled or cimputed online
-            if iteration > 3 and  history["fom_solves_for_unassembled_residual_error_est"][-1] < history["fom_solves_for_assembling_residual_error_est"][-1]:
+            # test if error est needs to be assembled or computed online
+            if iteration > 3 and  history["fom_solves_for_unassembled_residual_error_est"][-1] < history["fom_solves_for_assembling_residual_error_est"][-1] and skip_error_est_assembly_condition:
                switched_at_iteration.append(iteration)
                reductor_type = 'non_assembled'
                print('Switch to online error est')
@@ -296,8 +296,10 @@ def Qr_Vr_TR_IRGNM(parameter_space, fom_IP, TR_IRGNM_setup, q0, tol = 1e-6, init
                 u_r_current, p_r_current, A_q_r_current = surrogate.rom.solve_and_assemble(q_r)
                 current_output = surrogate.rom_output(q, u_r_current, Tikonov = outer_alpha)
                 estimate_output = sub_history['estimates'][-1]
-               
-            history['fom_solves_for_unassembled_residual_error_est'].append(sub_history['counter_error_est'] + counter_armijo)
+            
+            # save potential fom solves for error est online valuations
+            online_error_est_fom_solves += sub_history['counter_error_est'] + counter_armijo
+            
             # Reconstruct q
             q = basis_Q.lincomb(q_r).to_numpy()[0]   
             fom_IP.check_parameter_bounds(q)
@@ -469,7 +471,9 @@ def Qr_Vr_TR_IRGNM(parameter_space, fom_IP, TR_IRGNM_setup, q0, tol = 1e-6, init
                     history['fom_solves_for_assembling_residual_error_est'].append(old_basis_len_Q*RB_len_diff + basis_diff_Q*surrogate.rb_size() + RB_len_diff)
                 else: # coarsening, so build everything from scratch
                     history['fom_solves_for_assembling_residual_error_est'].append(basis_diff_Q*surrogate.rb_size())
-                                
+                history['fom_solves_for_unassembled_residual_error_est'].append(online_error_est_fom_solves)
+                online_error_est_fom_solves = 0
+                
                 # get next initial alpha
                 if len(sub_history_accepted['Alpha']) >= 2:
                     alpha0 = sub_history_accepted['Alpha'][1]                  
@@ -490,8 +494,8 @@ def Qr_Vr_TR_IRGNM(parameter_space, fom_IP, TR_IRGNM_setup, q0, tol = 1e-6, init
                 if TR_condition_break:
                     get_new_AGC_point = True
                     
-                # extend if twice rejected
-                if len(history["accepted_rejected_string"])>2:                    
+                # extend if three times rejected/ SAFEGUARD
+                if len(history["accepted_rejected_string"])>10 and 1:                    
                     if 'rejected' in history["accepted_rejected_string"][-1] and 'rejected' in history["accepted_rejected_string"][-2] and 'rejected' in history["accepted_rejected_string"][-3]:
                         u_current, p_current, A_q_current = fom_IP.solve_and_assemble(q)
                         
@@ -542,7 +546,7 @@ def Qr_Vr_TR_IRGNM(parameter_space, fom_IP, TR_IRGNM_setup, q0, tol = 1e-6, init
                print(f'k = {iteration:<3}' + string + \
                      f' radius = {radius:1.2e}, '
                      + sub_history['flag'])
-               print(f'     output_res = {np.sqrt(2*old_fom_output):3.4e}, norm_grad = {history["non_regularized_gradient_norm"][-1]:3.4e}, len Q_basis = {len(basis_Q)}, len RB = {len_old_RB}, FOM solves: {history["number_fom_solves"]}, FOM solves unassembled error est: {history["fom_solves_for_unassembled_residual_error_est"][-1]}, FOM solves assembling error est: {history["fom_solves_for_assembling_residual_error_est"][-1]}')
+               print(f'     output_res = {np.sqrt(2*old_fom_output):3.4e}, norm_grad = {history["non_regularized_gradient_norm"][-1]:3.4e}, len Q_basis = {len(basis_Q)}, len RB = {len_old_RB}, FOM solves: {history["number_fom_solves"]}')# FOM solves unassembled error est: {history["fom_solves_for_unassembled_residual_error_est"][-1]}, FOM solves assembling error est: {history["fom_solves_for_assembling_residual_error_est"][-1]}')
 
 #============= Finalize Output ================================================
     print('--------------------- RESULTS ------------------------------------')
@@ -555,7 +559,10 @@ def Qr_Vr_TR_IRGNM(parameter_space, fom_IP, TR_IRGNM_setup, q0, tol = 1e-6, init
     history['len_Q_basis'] = len(basis_Q)
     history['len_V_basis'] = len_old_RB
     del history['subproblem_history']
-    history['true_fom_solves_for_residual_error_est'] = sum(history["fom_solves_for_unassembled_residual_error_est"][switched_at_iteration[0]:]) + sum(history["fom_solves_for_assembling_residual_error_est"][:switched_at_iteration[0]])
+    if len(switched_at_iteration)>0:
+        history['true_fom_solves_for_error_est'] =  history["fom_solves_for_assembling_residual_error_est"][:switched_at_iteration[0]]+ history["fom_solves_for_unassembled_residual_error_est"][switched_at_iteration[0]:]#sum(history["fom_solves_for_unassembled_residual_error_est"][switched_at_iteration[0]:]) + sum(history["fom_solves_for_assembling_residual_error_est"][:switched_at_iteration[0]])
+    else:
+        history['true_fom_solves_for_error_est'] = history["fom_solves_for_assembling_residual_error_est"]
     history['q'] = q
     # print(f'Time to assemble B_u: {sum(history["time_assemb_B_u"])}')
     # print(f'Elapsed time to reach 1e-5 is {history["time1e-5"]:4.5f} seconds.')
@@ -563,8 +570,8 @@ def Qr_Vr_TR_IRGNM(parameter_space, fom_IP, TR_IRGNM_setup, q0, tol = 1e-6, init
     print(f'Elapsed time is {history["time"]:4.5f} seconds.')
     print(f'V reduced basis size is {surrogate.rb_size()} and Q basis size is {len(basis_Q)}')
     #print(history['initial_alphas'])
-    print(f'FOM solves: {history["number_fom_solves"]}, true FOM solves error est: {history["true_fom_solves_for_residual_error_est"]}, FOM solves unassembled error est:  {sum(history["fom_solves_for_unassembled_residual_error_est"])}, FOM solves assembling error est:  {sum(history["fom_solves_for_assembling_residual_error_est"])}')
-    # print(f'FOM solves: {history["number_fom_solves"]}, true FOM solves error est: {history["true_fom_solves_for_residual_error_est"]}, FOM solves unassembled error est:  {sum(history["fom_solves_for_unassembled_residual_error_est"])}, FOM solves assembling error est:  {sum(history["fom_solves_for_assembling_residual_error_est"])}')
+    print(f'FOM solves: {history["number_fom_solves"]}, true FOM solves error est: {sum(history["true_fom_solves_for_error_est"])}, FOM solves unassembled error est:  {sum(history["fom_solves_for_unassembled_residual_error_est"])}, FOM solves assembling error est:  {sum(history["fom_solves_for_assembling_residual_error_est"])}')
+    # print(f'FOM solves: {history["number_fom_solves"]}, true FOM solves error est: {history["true_fom_solves_for_error_est"]}, FOM solves unassembled error est:  {sum(history["fom_solves_for_unassembled_residual_error_est"])}, FOM solves assembling error est:  {sum(history["fom_solves_for_assembling_residual_error_est"])}')
     print('------------------------------------------------------------------')
     return q, history
 

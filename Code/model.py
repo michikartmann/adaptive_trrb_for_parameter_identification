@@ -14,6 +14,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import scipy
+#import tikzplotlib
 from helpers import LINSOLVER_with_callback, struct
 from pymor.operators.constructions import LincombOperator
 from pymor.models.basic import StationaryModel
@@ -460,8 +461,8 @@ class StationaryModelIP(StationaryModel):
     def estimate_output(self,u_r,p_r,q):
         est_state = self.estimate_state(q, u_r)
         dual_residual = self.dual_residual(u_r, p_r, q)
-        norm_observation_operator = 1 
-        return float(norm_observation_operator**2*est_state**2+dual_residual*est_state)
+        norm_observation_operator = 1
+        return float((norm_observation_operator**2)/2*est_state**2+dual_residual*est_state)
     
     def estimate_linearized_state(self,B_u_r, u_lin_r, d,q):
         if self.estimators is not None:
@@ -481,22 +482,54 @@ class StationaryModelIP(StationaryModel):
     
 #%% other stuff
     
-    def plot_matplotlib(self, q, title = None, save = False, save_title = None, path = None):
+    def save_eps(self, q, title = None, save = False, save_title = None, path = None, save_eps = True):
         q = self.nodes_to_element_projection.dot(q)
         n = int(np.sqrt(q.shape[0]))
         q_cube = q.reshape((n,n))
-        plt.imshow(q_cube, origin='lower')
-        plt.xticks(ticks = [], labels = [])
-        plt.yticks(ticks = [], labels = [])
-        plt.colorbar()
-        plt.title(title)
+        fig = plt.imshow(q_cube, origin='lower')
         if save:
             if path is not None:
                 save_title = path + save_title
-            plt.savefig(save_title, bbox_inches='tight')
+            plt.axis('off')
+            plt.savefig(save_title+'.eps',  bbox_inches='tight',transparent=True, pad_inches=0)
+        plt.close(fig)
+            
+    def plot_matplotlib(self, q, title = None, save = False, save_title = None, path = None, save_eps = True, colormap_bounds = None):
+        q = self.nodes_to_element_projection.dot(q)
+        n = int(np.sqrt(q.shape[0]))
+        q_cube = q.reshape((n,n))
+        
+        if save_eps:
+            plt.imshow(q_cube, origin='lower')
+            if colormap_bounds is not None:
+                plt.clim(colormap_bounds[0], colormap_bounds[1]);
+            if save:
+                if path is not None:
+                    save_title = path + save_title
+                plt.axis('off')
+                plt.savefig(save_title+'.eps',  bbox_inches='tight',transparent=True, pad_inches=0)
+            
+        else:
+            plt.imshow(q_cube, origin='lower')
+            plt.xticks(ticks = [], labels = [])
+            plt.yticks(ticks = [], labels = [])
+            plt.colorbar()
+            if colormap_bounds is not None:
+                plt.clim(colormap_bounds[0], colormap_bounds[1]);
+            plt.title(title)
+            if save:
+                if path is not None:
+                
+                    save_title = path + save_title
+                plt.savefig(save_title+'.png', bbox_inches='tight')
+                # plt.imsave(save_title+'.eps')
         plt.show()
     
     def plot_subplot_para(self, q1, q2, q3, q4, title = None, save = False, save_title = None, path = None):
+        max_q = max(max(q1),max(q2),max(q3),max(q4))
+        min_q = min(min(q1),min(q2),min(q3),min(q4))
+        # print(max_q)
+        # print(min_q)
         q1 = self.nodes_to_element_projection.dot(q1)
         n = int(np.sqrt(q1.shape[0]))
         q_cube1 = q1.reshape((n,n))
@@ -514,8 +547,6 @@ class StationaryModelIP(StationaryModel):
         q_cube4 = q4.reshape((n,n))
         
         q_list = [q_cube1,q_cube2,q_cube3,q_cube4]
-        max_q = max(max(q1),max(q2),max(q3),max(q4))
-        min_q = min(min(q1),min(q2),min(q3),min(q4))
         
         from matplotlib.colors import Normalize
         import matplotlib.cm as cm
@@ -544,6 +575,8 @@ class StationaryModelIP(StationaryModel):
         if save:
             if path is not None:
                 save_title = path + save_title
+            if 0:
+                tikzplotlib.save("tikz.tex")
             plt.savefig(save_title, bbox_inches='tight')
         #plt.xlim(0, 1)
         plt.show()
@@ -551,3 +584,18 @@ class StationaryModelIP(StationaryModel):
     def check_parameter_bounds(self,q):
         if not (np.all(q-self.bounds[1] <= 0) and np.all(self.bounds[0]-q <= 0)):
             pass
+        
+    def save_eps_file(self, q, title = None, save = False, save_title = None, path = None):
+        pass
+    
+    def get_min_max(self, q0, q1, q2, q3 = None):
+        q_list = []
+        q_listt = [q0, q1,q2,q3]
+        for i in q_listt:
+            if i is not None:
+              q_list.append(i)  
+        
+        A = np.array(q_list)
+        # print(min(A.flatten()), max(A.flatten()))
+        return min(A.flatten()), max(A.flatten())
+        
